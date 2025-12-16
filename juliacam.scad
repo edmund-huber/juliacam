@@ -31,16 +31,18 @@ module Viewfinder() {
                 cube([15, body_d+10, 10]);
                 sphere(2);
         }
-        // Punch out the viewfinder.
-        translate([body_w-15, -10, body_h-10])
-            cube([13, body_d+40, 8]);
     }
 }
 
 module Camera() {
-    union() {
-        Body();
-        Viewfinder();
+    difference() {
+        union() {
+            Body();
+            Viewfinder();
+        }
+        // Punch out the viewfinder.
+        translate([body_w-15, -10, body_h-10])
+            cube([13, body_d+40, 8]);
     }
 }
 
