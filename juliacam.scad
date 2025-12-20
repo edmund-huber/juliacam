@@ -22,9 +22,21 @@ module BodyBox(shrink=0) {
 }
 
 module Body() {
-    difference() {
-        BodyBox(shrink=0);
-        BodyBox(shrink=2);
+    union() {
+        // The Body, hollowed out.
+        difference() {
+            BodyBox(shrink=0);
+            BodyBox(shrink=2);
+        }
+        difference() {
+            intersection() {
+                BodyBox(shrink=0);
+                translate([0, 0, body_h-10])
+                    cube([body_w, body_d, 10]);
+            }
+            translate([5, 5, body_h-10])
+                cube([body_w-10, body_d-10, 7]);
+        }
     }
 }
 
@@ -71,7 +83,7 @@ module TopHalf() {
     intersection() {
         Camera();
         translate([0, 0, (inf/2) + body_h - fillet_r_z - 2])
-        cube([inf, inf, inf], center=true);
+            cube([inf, inf, inf], center=true);
     }
 }
 
@@ -83,6 +95,9 @@ module BottomHalf() {
     }
 }
 
+//transverse_section = 1;
+//sagittal_section = 1;
+
 if (!is_undef(part)) {
     if (part == 1) {
         TopHalf();
@@ -90,6 +105,28 @@ if (!is_undef(part)) {
         BottomHalf();
     } else {
         assert(false);
+    }
+} else if (!is_undef(transverse_section)) {
+    intersection() {
+        union() {
+            TopHalf();
+            BottomHalf();
+        }
+        translate([body_w/2, 0, 0])
+            cube([5, inf, inf]);
+    }
+} else if (!is_undef(sagittal_section)) {
+    intersection() {
+        union() {
+            TopHalf();
+            BottomHalf();
+        }
+        union() {
+            translate([0, body_d/2, 0])
+                cube([inf, 5, inf]);
+            translate([0, body_d + body_d/2, 0])
+                cube([inf, 5, inf]);
+        }
     }
 } else {
     TopHalf();
