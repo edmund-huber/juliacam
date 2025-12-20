@@ -1,36 +1,56 @@
 $fs = 0.1;
-body_r = 5;
-body_w = 100 - (2 * body_r);
-body_d = 30 - (2 * body_r);
-body_h = 50 - (2 * body_r);
-module BodyBox(radius) {
+fillet_r_xy = 5;
+fillet_r_z = 3;
+body_w = 100;
+body_d = 40;
+body_h = 20;
+module BodyBox(shrink=0) {
+    translate([shrink, shrink, shrink])
+    resize([body_w - shrink*2, body_d - shrink*2, body_h - shrink*2])
     minkowski() {
-        translate([body_r, body_r, body_r])
-            sphere(radius);
-        cube([body_w, body_d, body_h]);
+        scale([fillet_r_xy*2, fillet_r_xy*2, fillet_r_z*2])
+        intersection() {
+        union() {
+            polyhedron(points=[[0,0,0.5],[1,0,0.5],[1,1,0.5],[0,1,0.5],[0.5,0.5,1]], faces=[[0,1,4],[1,2,4],[2,3,4],[3,0,4],[1,0,3],[2,1,3]]);
+            polyhedron(points=[[0,0,0.5],[1,0,0.5],[1,1,0.5],[0,1,0.5],[0.5,0.5,0]], faces=[[0,1,4],[1,2,4],[2,3,4],[3,0,4],[1,0,3],[2,1,3]]);
+        }
+        translate([0.5, 0.5, 0])
+        cylinder(h=1, d=1);
+    }
+        cube([body_w - fillet_r_xy*2, body_d - fillet_r_xy*2, body_h - fillet_r_z*2]);
     }
 }
 
 module Body() {
     difference() {
-        BodyBox(body_r);
-        BodyBox(body_r - 3);
-        translate([(body_w+10)/2, 5, (body_h+10)/2])
-            rotate([90, 0, 0])
-            cylinder(10, 20, 20);
-        translate([20, (body_d+10)/2, body_h+5])
-            cylinder(h=10, r=5);
+        BodyBox(shrink=0);
+        BodyBox(shrink=2);
     }
 }
 
-module Viewfinder() {
-    // viewfinder
-    difference() {
-        minkowski() {
-            translate([body_w-15, 0, body_h-10])
-                cube([15, body_d+10, 10]);
-                sphere(2);
+module Lens(positive=false, negative=false) {
+    assert(positive || negative);
+    assert(!(positive && negative));
+    if (positive) {
+        
+    }
+}
+
+module Viewfinder(positive=false, negative=false) {
+    assert(positive || negative);
+    assert(!(positive && negative));
+    if (positive) {
+        difference() {
+            minkowski() {
+                translate([body_w-15, 0, body_h-10])
+                    cube([15, body_d+10, 10]);
+                    sphere(1);
+            }
         }
+    }
+    if (negative) {
+        translate([body_w-15, -10, body_h-10])
+            cube([13, body_d+40, 8]);
     }
 }
 
@@ -38,28 +58,40 @@ module Camera() {
     difference() {
         union() {
             Body();
-            Viewfinder();
+            //Viewfinder(positive=true);
         }
-        // Punch out the viewfinder.
-        translate([body_w-15, -10, body_h-10])
-            cube([13, body_d+40, 8]);
+        //Viewfinder(negative=true);
     }
 }
 
-//just_top_half = 1;
 inf = 999;
-if (!is_undef(just_top_half)) {
-    difference() {
+
+module TopHalf() {
+    translate([0, body_d + 10, 0])
+    intersection() {
         Camera();
-        translate([-inf/2, d/2, -inf/2])
-            cube([inf, inf, inf]);
+        translate([0, 0, (inf/2) + body_h - fillet_r_z - 2])
+        cube([inf, inf, inf], center=true);
     }
-} else if (!is_undef(just_bottom_half)) {
+}
+
+module BottomHalf() {
     difference() {
         Camera();
-        translate([-inf/2, -inf, -inf/2])
-            cube([inf, inf, inf]);
+        translate([0, 0, (inf/2) + body_h - fillet_r_z - 2])
+            cube([inf, inf, inf], center=true);
+    }
+}
+
+if (!is_undef(part)) {
+    if (part == 1) {
+        TopHalf();
+    } else if (part == 2) {
+        BottomHalf();
+    } else {
+        assert(false);
     }
 } else {
-    Camera();
+    TopHalf();
+    BottomHalf();
 }
