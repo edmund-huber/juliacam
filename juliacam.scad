@@ -21,21 +21,45 @@ module BodyBox(shrink=0) {
     }
 }
 
+module Screwholders(z, h) {
+    translate([5, 5, z-h])
+        cylinder(h=h, r=5);
+    translate([body_w/2, 5, z-h])
+        cylinder(h=h, r=5);
+    translate([body_w - 5, 5, z-h])
+        cylinder(h=h, r=5);
+    translate([5, body_d - 5, z-h])
+        cylinder(h=h, r=5);
+    translate([body_w/2, body_d - 5, z-h])
+        cylinder(h=h, r=5);
+    translate([body_w - 5, body_d - 5, z-h])
+        cylinder(h=h, r=5);
+}
+
 module Body() {
     union() {
-        // The Body, hollowed out.
+        // The body, hollowed out.
         difference() {
-            BodyBox(shrink=0);
+            union() {
+                BodyBox(shrink=0);
+                Screwholders(5, 5);
+            }
             BodyBox(shrink=2);
         }
-        difference() {
-            intersection() {
-                BodyBox(shrink=0);
-                translate([0, 0, body_h-10])
-                    cube([body_w, body_d, 10]);
+        // Beef up the top so that we can place the gasket trench and screw holders.
+        union() {
+            difference() {
+                // Make a solid top,
+                intersection() {
+                    BodyBox(shrink=0);
+                    translate([0, 0, body_h-10])
+                        cube([body_w, body_d, 5]);
+                }
+                // .. and subtract out some of the inside.
+                translate([5, 5, body_h-10])
+                    cube([body_w-10, body_d-10, 7]);
             }
-            translate([5, 5, body_h-10])
-                cube([body_w-10, body_d-10, 7]);
+            Screwholders(body_h, 7);
         }
     }
 }
@@ -112,8 +136,8 @@ if (!is_undef(part)) {
             TopHalf();
             BottomHalf();
         }
-        translate([body_w/2, 0, 0])
-            cube([5, inf, inf]);
+        translate([(body_w/2) - 5, 0, 0])
+            cube([10, inf, inf]);
     }
 } else if (!is_undef(sagittal_section)) {
     intersection() {
