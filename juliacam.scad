@@ -22,17 +22,41 @@ module BodyBox(shrink=0) {
     }
 }
 
-module Screwholder(h, r, add=false, sub=false) {
+module GasketLedge() {
+    h = 6;
+    w = 6;
+    intersection() {
+        BodyBox(shrink=0);
+        union() {
+            translate([0, 0, body_h - h])
+                cube([body_w, w, h]);
+            translate([0, body_d - w, body_h - h])
+                cube([body_w, w, h]);
+            translate([0, 0, body_h - h])
+                cube([w, body_d, h]);
+            translate([body_w - w, 0, body_h - h])
+                cube([w, body_d, h]);
+        }
+    }
+}
+
+module Screwholder(x, y, z, h, r, add=false, sub=false) {
     assert(add || sub);
     assert(!(add && sub));
     if (add) {
-        intersection() {
-            BodyBox()
-            cylinder(h=h, r=r-2);
+        union() {
+            intersection() {
+                BodyBox(shrink=0);
+                translate([x, y, z-3])
+                    cylinder(h=h, r=r);
+            }
         }
     }
     if (sub) {
-        cylinder(h=h, r=r);
+        translate([x, y, z+2])
+            cylinder(h=h, r=r-2);
+        translate([x, y, z-10])
+            cylinder(h=h+10, r=r-3);
     }
 }
 
@@ -50,8 +74,7 @@ module Screwholders(z, h, add=false, sub=false) {
         [mid_x, min_y], [mid_x, max_y],
         [max_x, min_y], [max_x, max_y]
     ]) {
-        translate([xy[0], xy[1], body_h - h])
-        Screwholder(h, r, add=add, sub=sub);
+        Screwholder(xy[0], xy[1], body_h - h, h, r, add=add, sub=sub);
     }
 }
 
@@ -60,11 +83,14 @@ module Body() {
         // The body, hollowed out.
         difference() {
             union() {
-                BodyBox(shrink=0);
+                difference() {
+                    BodyBox(shrink=0);
+                    BodyBox(shrink=2);
+                }
+                GasketLedge();
                 Screwholders(5, 5, add=true);
             }
             Screwholders(5, 5, sub=true);
-            BodyBox(shrink=2);
         }
         // Beef up the top so that we can place the gasket trench and screw holders.
         /*union() {
