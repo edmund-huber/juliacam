@@ -6,34 +6,53 @@ body_d = 40;
 body_h = 20;
 module BodyBox(shrink=0) {
     translate([shrink, shrink, shrink])
-    resize([body_w - shrink*2, body_d - shrink*2, body_h - shrink*2])
     minkowski() {
         scale([fillet_r_xy*2, fillet_r_xy*2, fillet_r_z*2])
         intersection() {
-        union() {
-            polyhedron(points=[[0,0,0.5],[1,0,0.5],[1,1,0.5],[0,1,0.5],[0.5,0.5,1]], faces=[[0,1,4],[1,2,4],[2,3,4],[3,0,4],[1,0,3],[2,1,3]]);
-            polyhedron(points=[[0,0,0.5],[1,0,0.5],[1,1,0.5],[0,1,0.5],[0.5,0.5,0]], faces=[[0,1,4],[1,2,4],[2,3,4],[3,0,4],[1,0,3],[2,1,3]]);
+            union() {
+                polyhedron(points=[[0,0,0.5],[1,0,0.5],[1,1,0.5],[0,1,0.5],[0.5,0.5,1]], faces=[[0,1,4],[1,2,4],[2,3,4],[3,0,4],[1,0,3],[2,1,3]]);
+                polyhedron(points=[[0,0,0.5],[1,0,0.5],[1,1,0.5],[0,1,0.5],[0.5,0.5,0]], faces=[[0,1,4],[1,2,4],[2,3,4],[3,0,4],[1,0,3],[2,1,3]]);
+            }
         }
-        translate([0.5, 0.5, 0])
-        cylinder(h=1, d=1);
-    }
-        cube([body_w - fillet_r_xy*2, body_d - fillet_r_xy*2, body_h - fillet_r_z*2]);
+        cube([
+            body_w - fillet_r_xy*2 - shrink*2,
+            body_d - fillet_r_xy*2 - shrink*2,
+            body_h - fillet_r_z*2 - shrink*2
+        ]);
     }
 }
 
-module Screwholders(z, h) {
-    translate([5, 5, z-h])
-        cylinder(h=h, r=5);
-    translate([body_w/2, 5, z-h])
-        cylinder(h=h, r=5);
-    translate([body_w - 5, 5, z-h])
-        cylinder(h=h, r=5);
-    translate([5, body_d - 5, z-h])
-        cylinder(h=h, r=5);
-    translate([body_w/2, body_d - 5, z-h])
-        cylinder(h=h, r=5);
-    translate([body_w - 5, body_d - 5, z-h])
-        cylinder(h=h, r=5);
+module Screwholder(h, r, add=false, sub=false) {
+    assert(add || sub);
+    assert(!(add && sub));
+    if (add) {
+        intersection() {
+            BodyBox()
+            cylinder(h=h, r=r-2);
+        }
+    }
+    if (sub) {
+        cylinder(h=h, r=r);
+    }
+}
+
+module Screwholders(z, h, add=false, sub=false) {
+    assert(add || sub);
+    assert(!(add && sub));
+    r = 4;
+    min_x = r;
+    mid_x = body_w / 2;
+    max_x = body_w - r;
+    min_y = r;
+    max_y = body_d - r;
+    for (xy = [
+        [min_x, min_y], [min_x, max_y],
+        [mid_x, min_y], [mid_x, max_y],
+        [max_x, min_y], [max_x, max_y]
+    ]) {
+        translate([xy[0], xy[1], body_h - h])
+        Screwholder(h, r, add=add, sub=sub);
+    }
 }
 
 module Body() {
@@ -42,17 +61,18 @@ module Body() {
         difference() {
             union() {
                 BodyBox(shrink=0);
-                Screwholders(5, 5);
+                Screwholders(5, 5, add=true);
             }
+            Screwholders(5, 5, sub=true);
             BodyBox(shrink=2);
         }
         // Beef up the top so that we can place the gasket trench and screw holders.
-        union() {
+        /*union() {
             difference() {
                 // Make a solid top,
                 intersection() {
                     BodyBox(shrink=0);
-                    translate([0, 0, body_h-10])
+                    translate([0, 0, body_h-7])
                         cube([body_w, body_d, 5]);
                 }
                 // .. and subtract out some of the inside.
@@ -60,44 +80,12 @@ module Body() {
                     cube([body_w-10, body_d-10, 7]);
             }
             Screwholders(body_h, 7);
-        }
-    }
-}
-
-module Lens(positive=false, negative=false) {
-    assert(positive || negative);
-    assert(!(positive && negative));
-    if (positive) {
-        
-    }
-}
-
-module Viewfinder(positive=false, negative=false) {
-    assert(positive || negative);
-    assert(!(positive && negative));
-    if (positive) {
-        difference() {
-            minkowski() {
-                translate([body_w-15, 0, body_h-10])
-                    cube([15, body_d+10, 10]);
-                    sphere(1);
-            }
-        }
-    }
-    if (negative) {
-        translate([body_w-15, -10, body_h-10])
-            cube([13, body_d+40, 8]);
+        }*/
     }
 }
 
 module Camera() {
-    difference() {
-        union() {
-            Body();
-            //Viewfinder(positive=true);
-        }
-        //Viewfinder(negative=true);
-    }
+    Body();
 }
 
 inf = 999;
