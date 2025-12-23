@@ -247,40 +247,19 @@ void takePicture()
     esp_camera_fb_return(pic);
 }
 
-void cameraTakePicture_5_sec(void *pvParameters)
-{
-    for (;;)
-    {
-        takePicture();
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-    }
-}
-
-void createCameraTask()
-{
-    TaskHandle_t task;
-    xTaskCreate(
-        cameraTakePicture_5_sec,      /* Function that implements the task. */
-        "cameraTakePicture_5_sec",    /* Text name for the task. */
-        configMINIMAL_STACK_SIZE * 4, /* Stack size in words, or bytes. */
-        NULL,                         /* Parameter passed into the task. */
-        tskIDLE_PRIORITY,             /* Priority at which the task is created. */
-        &task                         /* Used to pass out the created task's handle. */
-    );
-}
 void initialize_drivers()
 {
     initialize_sdcard();
     initialize_camera();
 }
 
-void start_tasks()
-{
-    createCameraTask();
-}
-
 void app_main(void)
 {
     initialize_drivers();
-    start_tasks();
+
+    for (;;)
+    {
+        takePicture();
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+    }
 }
