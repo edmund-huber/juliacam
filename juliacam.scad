@@ -47,16 +47,19 @@ module Screwholder(x, y, z, h, r, add=false, sub=false) {
         union() {
             intersection() {
                 BodyBox(shrink=0);
+                // A screw post large enough to accomodate the entire screw.
                 translate([x, y, z-3])
                     cylinder(h=h, r=r);
             }
         }
     }
     if (sub) {
+        // Bore out the space for the M3 screw head.
         translate([x, y, z+2])
-            cylinder(h=h, r=r-2);
+            cylinder(h=h, d=6);
+        // Bore out a space for the M3 threaded insert.
         translate([x, y, z-10])
-            cylinder(h=h+10, r=r-3);
+            cylinder(h=h+10, d=4.5);
     }
 }
 
