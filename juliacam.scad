@@ -1,9 +1,11 @@
 $fs = 0.1;
+inf = 999;
 fillet_r_xy = 5;
 fillet_r_z = 3;
 body_w = 100;
 body_d = 40;
 body_h = 20;
+body_top_h = 5;
 module BodyBox(shrink=0) {
     translate([shrink, shrink, shrink])
     minkowski() {
@@ -40,44 +42,45 @@ module GasketLedge() {
     }
 }
 
-module Screwholder(x, y, z, h, r, add=false, sub=false) {
+module Screwholder(x, y, z, r, add=false, sub=false) {
     assert(add || sub);
     assert(!(add && sub));
+    screw_post_h = 6;
     if (add) {
         union() {
             intersection() {
                 BodyBox(shrink=0);
                 // A screw post large enough to accomodate the entire screw.
-                translate([x, y, z-3])
-                    cylinder(h=h, r=r);
+                translate([x, y, z - screw_post_h])
+                    cylinder(h=inf, r=r);
             }
         }
     }
     if (sub) {
         // Bore out the space for the M3 screw head.
         translate([x, y, z+2])
-            cylinder(h=h, d=6);
+            cylinder(h=inf, d=6);
         // Bore out a space for the M3 threaded insert.
-        translate([x, y, z-10])
-            cylinder(h=h+10, d=4.5);
+        translate([x, y, z - screw_post_h + 1])
+            cylinder(h=inf, d=4.5);
     }
 }
 
 module Screwholders(z, h, add=false, sub=false) {
     assert(add || sub);
     assert(!(add && sub));
-    r = 4;
-    min_x = r;
+    r = 6;
+    min_x = 4;
     mid_x = body_w / 2;
-    max_x = body_w - r;
-    min_y = r;
-    max_y = body_d - r;
+    max_x = body_w - 4;
+    min_y = 4;
+    max_y = body_d - 4;
     for (xy = [
         [min_x, min_y], [min_x, max_y],
         [mid_x, min_y], [mid_x, max_y],
         [max_x, min_y], [max_x, max_y]
     ]) {
-        Screwholder(xy[0], xy[1], body_h - h, h, r, add=add, sub=sub);
+        Screwholder(xy[0], xy[1], z, r, add=add, sub=sub);
     }
 }
 
@@ -91,9 +94,9 @@ module Body() {
                     BodyBox(shrink=2);
                 }
                 GasketLedge();
-                Screwholders(5, 5, add=true);
+                Screwholders(body_h - 5, 5, add=true);
             }
-            Screwholders(5, 5, sub=true);
+            Screwholders(body_h - 5, 5, sub=true);
         }
         // Beef up the top so that we can place the gasket trench and screw holders.
         /*union() {
@@ -117,13 +120,11 @@ module Camera() {
     Body();
 }
 
-inf = 999;
-
 module TopHalf() {
     translate([0, body_d + 10, 0])
     intersection() {
         Camera();
-        translate([0, 0, (inf/2) + body_h - fillet_r_z - 2])
+        translate([0, 0, (inf/2) + body_h - body_top_h])
             cube([inf, inf, inf], center=true);
     }
 }
@@ -131,7 +132,7 @@ module TopHalf() {
 module BottomHalf() {
     difference() {
         Camera();
-        translate([0, 0, (inf/2) + body_h - fillet_r_z - 2])
+        translate([0, 0, (inf/2) + body_h - body_top_h])
             cube([inf, inf, inf], center=true);
     }
 }
@@ -153,7 +154,7 @@ if (!is_undef(part)) {
             TopHalf();
             BottomHalf();
         }
-        translate([(body_w/2) - 5, 0, 0])
+        translate([body_w/2, 0, 0])
             cube([10, inf, inf]);
     }
 } else if (!is_undef(sagittal_section)) {
