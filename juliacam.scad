@@ -84,35 +84,71 @@ module Screwholders(z, h, add=false, sub=false) {
     }
 }
 
-module Body() {
-    union() {
-        // The body, hollowed out.
-        difference() {
-            union() {
-                difference() {
-                    BodyBox(shrink=0);
-                    BodyBox(shrink=2);
-                }
-                GasketLedge();
-                Screwholders(body_h - 5, 5, add=true);
-            }
-            Screwholders(body_h - 5, 5, sub=true);
-        }
-        // Beef up the top so that we can place the gasket trench and screw holders.
-        /*union() {
-            difference() {
-                // Make a solid top,
-                intersection() {
-                    BodyBox(shrink=0);
-                    translate([0, 0, body_h-7])
-                        cube([body_w, body_d, 5]);
-                }
-                // .. and subtract out some of the inside.
-                translate([5, 5, body_h-10])
-                    cube([body_w-10, body_d-10, 7]);
-            }
-            Screwholders(body_h, 7);
+module Viewfinder(add=false, sub=false) {
+    assert(add || sub);
+    assert(!(add && sub));
+    if (add) {
+        translate([10, 10, body_h - 3])
+            minkowski() {
+                cube([13, 8, 3.9]);
+                cylinder(h=0.1, r=2);
+            };
+        /*intersection() {
+            BodyBox(shrink=0);
+            translate([10, 10, -inf/2])
+                cube([15, 10, inf]);
         }*/
+    }
+    if (sub) {
+        /*translate([11, 11, -inf/2])
+            cube([13, 8, inf]);*/
+    }
+}
+
+module Buttonholder(add=false, sub=false) {
+    assert(add || sub);
+    assert(!(add && sub));
+    if (add) {
+        intersection() {
+            BodyBox(shrink=0);
+            translate([70, 5, 10])
+                rotate([90, 0, 0])
+                    cylinder(h=inf, d=10);
+        }
+    }
+    if (sub) {
+        union() {
+            translate([70, 4, 10])
+                rotate([90, 0, 0])
+                    cylinder(h=inf, d=8);
+            translate([70, 6, 10])
+                rotate([90, 0, 0])
+                    cylinder(h=inf, d=4);
+        }
+    }
+}
+
+module Body() {
+    difference() {
+        union() {
+            // The body, hollowed out.
+            difference() {
+                union() {
+                    difference() {
+                        BodyBox(shrink=0);
+                        BodyBox(shrink=2);
+                    }
+                    GasketLedge();
+                    Screwholders(body_h - 5, 5, add=true);
+                    Viewfinder(add=true);
+                    Buttonholder(add=true);
+                }
+                Screwholders(body_h - 5, 5, sub=true);
+                Viewfinder(sub=true);
+                Buttonholder(sub=true);
+            }
+        }
+        
     }
 }
 
