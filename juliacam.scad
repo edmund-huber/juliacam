@@ -88,20 +88,18 @@ module Viewfinder(add=false, sub=false) {
     assert(add || sub);
     assert(!(add && sub));
     if (add) {
-        translate([10, 10, body_h - 3])
-            minkowski() {
-                cube([13, 8, 3.9]);
-                cylinder(h=0.1, r=2);
-            };
-        /*intersection() {
-            BodyBox(shrink=0);
-            translate([10, 10, -inf/2])
-                cube([15, 10, inf]);
-        }*/
+        minkowski() {
+            cube([13, 8, 2.9]);
+            cylinder(h=0.1, r=2);
+        };
     }
     if (sub) {
-        /*translate([11, 11, -inf/2])
-            cube([13, 8, inf]);*/
+        union() {
+            translate([-1, -1, -1])
+                cube([15, 10, 4]);
+            translate([-2, -2, -1])
+                cube([17, 12, 2]);
+        }
     }
 }
 
@@ -140,11 +138,13 @@ module Body() {
                     }
                     GasketLedge();
                     Screwholders(body_h - 5, 5, add=true);
-                    Viewfinder(add=true);
+                    translate([15, 10, body_h - 2])
+                        Viewfinder(add=true);
                     Buttonholder(add=true);
                 }
                 Screwholders(body_h - 5, 5, sub=true);
-                Viewfinder(sub=true);
+                translate([15, 10, body_h - 2])
+                    Viewfinder(sub=true);
                 Buttonholder(sub=true);
             }
         }
