@@ -2,9 +2,9 @@ $fs = 0.1;
 inf = 99999;
 fillet_r_xy = 5;
 fillet_r_z = 3;
-body_w = 100;
-body_d = 40;
-body_h = 20;
+body_w = 90;
+body_d = 55;
+body_h = 30;
 body_top_h = 5;
 body_skin_d = 2;
 
@@ -86,14 +86,13 @@ module Screwholders(z, h, add=false, sub=false) {
     }
 }
 
-viewfinder_x = 15;
-viewfinder_y = 10;
-viewfinder_w = 15;
-viewfinder_h = 10;
-
 module Viewfinder(add=false, sub=false) {
     assert(add || sub);
     assert(!(add && sub));
+    viewfinder_x = 7;
+    viewfinder_y = 7;
+    viewfinder_w = 25;
+    viewfinder_h = 20;
     if (add) {
         // Eye hole.
         translate([viewfinder_x, viewfinder_y, 0])
@@ -104,39 +103,17 @@ module Viewfinder(add=false, sub=false) {
         translate([viewfinder_x + 1, viewfinder_y + 1, 0])
             cube([viewfinder_w - 2, viewfinder_h - 2, inf]);
         // Camera hole.
+        camera_hole_r = 5;
         translate([
-            viewfinder_x + viewfinder_w + 5,
+            viewfinder_x + viewfinder_w + 5 + camera_hole_r,
             viewfinder_y + (viewfinder_h / 2),
             body_h - 2
         ])
-            cylinder(h=inf, r=(viewfinder_h - 2) / 2);
+            cylinder(h=inf, r=camera_hole_r);
         inset = 1;
         cutout_h = body_top_h - body_skin_d;
         translate([viewfinder_x, viewfinder_y, body_h - body_skin_d - cutout_h])
             cube([25, 10, cutout_h + inset]);
-    }
-}
-
-module Buttonholder(add=false, sub=false) {
-    assert(add || sub);
-    assert(!(add && sub));
-    if (add) {
-        intersection() {
-            BodyBox(shrink=0);
-            translate([70, 5, 10])
-                rotate([90, 0, 0])
-                    cylinder(h=inf, d=10);
-        }
-    }
-    if (sub) {
-        union() {
-            translate([70, 4, 10])
-                rotate([90, 0, 0])
-                    cylinder(h=inf, d=8);
-            translate([70, 6, 10])
-                rotate([90, 0, 0])
-                    cylinder(h=inf, d=4);
-        }
     }
 }
 
@@ -152,11 +129,14 @@ module Camera() {
                     GasketLedge();
                     Screwholders(body_h - 5, 5, add=true);
                     Viewfinder(add=true);
-                    Buttonholder(add=true);
                 }
                 Screwholders(body_h - 5, 5, sub=true);
                 Viewfinder(sub=true);
-                Buttonholder(sub=true);
+                // Hole for the button.
+                button_hole_d = 14;
+                translate([body_w - body_skin_d - 10 - (button_hole_d / 2), 4, body_h / 2])
+                rotate([90, 0, 0])
+                    cylinder(h=inf, d=button_hole_d);
             }
         }
         
