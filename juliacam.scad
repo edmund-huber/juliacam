@@ -1,5 +1,5 @@
 $fs = 0.1;
-inf = 999;
+inf = 99999;
 fillet_r_xy = 5;
 fillet_r_z = 3;
 body_w = 100;
@@ -84,22 +84,27 @@ module Screwholders(z, h, add=false, sub=false) {
     }
 }
 
+viewfinder_x = 15;
+viewfinder_y = 10;
+viewfinder_w = 15;
+viewfinder_h = 10;
+
 module Viewfinder(add=false, sub=false) {
     assert(add || sub);
     assert(!(add && sub));
     if (add) {
-        minkowski() {
-            cube([13, 8, 2.9]);
-            cylinder(h=0.1, r=2);
-        };
+        translate([viewfinder_x, viewfinder_y, 0])
+            cube([viewfinder_w, viewfinder_h, body_h]);
     }
     if (sub) {
-        union() {
-            translate([-1, -1, -1])
-                cube([15, 10, 4]);
-            translate([-2, -2, -1])
-                cube([17, 12, 2]);
-        }
+        translate([viewfinder_x + 1, viewfinder_y + 1, 0])
+            cube([viewfinder_w - 2, viewfinder_h - 2, inf]);
+        translate([
+            viewfinder_x + viewfinder_w + 5,
+            viewfinder_y + (viewfinder_h / 2),
+            body_h - 2
+        ])
+            cylinder(h=inf, r=(viewfinder_h - 2) / 2);
     }
 }
 
@@ -126,10 +131,9 @@ module Buttonholder(add=false, sub=false) {
     }
 }
 
-module Body() {
+module Camera() {
     difference() {
         union() {
-            // The body, hollowed out.
             difference() {
                 union() {
                     difference() {
@@ -138,13 +142,11 @@ module Body() {
                     }
                     GasketLedge();
                     Screwholders(body_h - 5, 5, add=true);
-                    translate([15, 10, body_h - 2])
-                        Viewfinder(add=true);
+                    Viewfinder(add=true);
                     Buttonholder(add=true);
                 }
                 Screwholders(body_h - 5, 5, sub=true);
-                translate([15, 10, body_h - 2])
-                    Viewfinder(sub=true);
+                Viewfinder(sub=true);
                 Buttonholder(sub=true);
             }
         }
@@ -152,24 +154,19 @@ module Body() {
     }
 }
 
-module Camera() {
-    Body();
-}
-
-module TopHalf() {
-    translate([0, body_d + 10, 0])
+module Part1() {
     intersection() {
         Camera();
-        translate([0, 0, (inf/2) + body_h - body_top_h])
-            cube([inf, inf, inf], center=true);
+        cube([body_w, body_d, body_h - body_top_h]);
     }
 }
 
-module BottomHalf() {
-    difference() {
+module Part2() {
+    translate([0, body_d + 10, 0])
+    intersection() {
         Camera();
-        translate([0, 0, (inf/2) + body_h - body_top_h])
-            cube([inf, inf, inf], center=true);
+        translate([0, 0, body_h - body_top_h])
+            cube([body_w, body_d, body_top_h]);
     }
 }
 
@@ -178,17 +175,17 @@ module BottomHalf() {
 
 if (!is_undef(part)) {
     if (part == 1) {
-        TopHalf();
+        Part1();
     } else if (part == 2) {
-        BottomHalf();
+        Part2();
     } else {
         assert(false);
     }
 } else if (!is_undef(transverse_section)) {
     intersection() {
         union() {
-            TopHalf();
-            BottomHalf();
+            Part1();
+            Part2();
         }
         translate([body_w/2, 0, 0])
             cube([10, inf, inf]);
@@ -196,8 +193,8 @@ if (!is_undef(part)) {
 } else if (!is_undef(sagittal_section)) {
     intersection() {
         union() {
-            TopHalf();
-            BottomHalf();
+            Part1();
+            Part2();
         }
         union() {
             translate([0, body_d/2, 0])
@@ -207,6 +204,8 @@ if (!is_undef(part)) {
         }
     }
 } else {
-    TopHalf();
-    BottomHalf();
+    Part1();
+    Part2();
+    translate([-body_w - 10, 0, 0])
+        Camera();
 }
