@@ -6,6 +6,8 @@ body_w = 100;
 body_d = 40;
 body_h = 20;
 body_top_h = 5;
+body_skin_d = 2;
+
 module BodyBox(shrink=0) {
     translate([shrink, shrink, shrink])
     minkowski() {
@@ -93,18 +95,25 @@ module Viewfinder(add=false, sub=false) {
     assert(add || sub);
     assert(!(add && sub));
     if (add) {
+        // Eye hole.
         translate([viewfinder_x, viewfinder_y, 0])
             cube([viewfinder_w, viewfinder_h, body_h]);
     }
     if (sub) {
+        // Eye hole.
         translate([viewfinder_x + 1, viewfinder_y + 1, 0])
             cube([viewfinder_w - 2, viewfinder_h - 2, inf]);
+        // Camera hole.
         translate([
             viewfinder_x + viewfinder_w + 5,
             viewfinder_y + (viewfinder_h / 2),
             body_h - 2
         ])
             cylinder(h=inf, r=(viewfinder_h - 2) / 2);
+        inset = 1;
+        cutout_h = body_top_h - body_skin_d;
+        translate([viewfinder_x, viewfinder_y, body_h - body_skin_d - cutout_h])
+            cube([25, 10, cutout_h + inset]);
     }
 }
 
@@ -138,7 +147,7 @@ module Camera() {
                 union() {
                     difference() {
                         BodyBox(shrink=0);
-                        BodyBox(shrink=2);
+                        BodyBox(shrink=body_skin_d);
                     }
                     GasketLedge();
                     Screwholders(body_h - 5, 5, add=true);
